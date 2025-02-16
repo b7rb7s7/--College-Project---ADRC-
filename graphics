@@ -1,0 +1,77 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy.stats as stats
+
+file_path = '/file_example/'
+with open(file_path, 'r') as f:
+    lines = f.readlines()
+
+values = []
+loss_count = 0
+all_values = []
+
+for line in lines:
+    line = line.strip()  
+    all_values.append(line)
+    if line == 'LOSS':
+        loss_count += 1
+    else:
+        try:
+            values.append(float(line))  
+        except ValueError:
+            pass  
+
+
+mean = np.mean(values)
+median = np.median(values)
+
+# Calcular o intervalo de confiança (usando 95%)
+confidence_interval = stats.t.interval(0.95, len(values)-1, loc=mean, scale=stats.sem(values))
+
+# Calcular packet loss (total)
+loss_percentage = (loss_count / len(all_values)) * 100
+
+plt.figure(figsize=(10, 6))
+
+bar_positions = []
+bar_values = []
+labels = []
+
+for i, value in enumerate(all_values):
+    if value == 'LOSS':
+        bar_positions.append(i)
+        bar_values.append(0) 
+        labels.append('X')
+    else:
+        try:
+            bar_positions.append(i)
+            bar_values.append(float(value))
+            labels.append(f'{value}')
+        except ValueError:
+            pass
+
+
+
+
+
+
+
+plt.bar(bar_positions, bar_values, color='blue')
+
+for i, label in enumerate(labels):
+    if label == 'X':
+        plt.text(bar_positions[i], 250, '|', ha='center', va='bottom', color='red', fontsize=12)
+
+plt.title('Tempos de Resposta e Perda de Pacotes')
+plt.xlabel('Índice')
+plt.ylabel('Tempo de Resposta / Perda de Pacotes')
+
+plt.tight_layout()
+plt.ylim(0, 300)
+plt.xlim(0,len(all_values))
+plt.show()
+
+print(f'Média: {mean:.2f}')
+print(f'Mediana: {median:.2f}')
+print(f"Intervalo de Confiança de 95%: ({confidence_interval[0]:.2f} ms, {confidence_interval[1]:.2f} ms)")
+print(f'Percentual de Perda de Pacotes (Packet Loss): {loss_percentage:.2f}%')
