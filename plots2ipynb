@@ -1,0 +1,87 @@
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Cenário 1
+file_ovpn_50 = "/file_example/"
+file_ovpn_100 = "/file_example/"
+file_wg_50 = "/file_example/"
+file_wg_100 = "/file_example/"
+
+# Cenário 2
+file_ovpn_50_2 = "/file_example/"
+file_ovpn_100_2= "/file_example/"
+file_wg_50_2= "/file_example/"
+file_wg_100_2 = "/file_example/"
+
+labels = ["OVPN-50", "OVPN-100", "WG-50", "WG-100"]
+scenarios = ["T2", "T3"]
+
+def process_file(filename):
+    if os.path.exists(filename):
+        with open(filename, "r") as f:
+            lines = f.readlines()
+            values = []
+            loss = 0
+
+            for line in lines:
+                line = line.strip()
+                if line.upper() == "LOSS":
+                    loss += 1
+                else:
+                    try:
+                        values.append(float(line))
+                    except ValueError:
+                        pass  
+
+            avg_resp = np.mean(values) if values else 0
+            loss_rate = (loss / len(lines) * 100) if lines else 0
+
+            return avg_resp, loss_rate
+    return 0, 0
+
+avg_resp_1 = []
+loss_rate_1 = []
+for file in [file_ovpn_50, file_ovpn_100, file_wg_50, file_wg_100]:
+    avg, loss = process_file(file)
+    avg_resp_1.append(avg)
+    loss_rate_1.append(loss)
+
+avg_resp_2 = []
+loss_rate_2 = []
+for file in [file_ovpn_50_2, file_ovpn_100_2, file_wg_50_2, file_wg_100_2]:
+    avg, loss = process_file(file)
+    avg_resp_2.append(avg)
+    loss_rate_2.append(loss)
+
+x = np.arange(len(labels))
+width = 0.35
+
+plt.figure(figsize=(10, 4))
+plt.subplot(1, 2, 1)
+plt.bar(x, avg_resp_1, width, label=scenarios[0], color="royalblue")
+plt.bar(x + width, avg_resp_2, width, label=scenarios[1], color="darkorange")
+
+avg_1 = np.mean(avg_resp_1) 
+avg_2 = np.mean(avg_resp_2)  
+
+if avg_1 > avg_2:
+    plt.ylim(0, avg_1 + 50)  
+else:
+    plt.ylim(0, avg_2 + 50) 
+    
+plt.xticks(x + width / 2, labels)
+plt.ylabel("Média do Tempo de Resposta (ms)")
+plt.title("Média do Tempo de Resposta")
+plt.legend()
+
+plt.subplot(1, 2, 2)
+plt.bar(x, loss_rate_1, width, label=scenarios[0], color="tomato")
+plt.bar(x + width, loss_rate_2, width, label=scenarios[1], color="seagreen")
+
+plt.xticks(x + width / 2, labels)
+plt.ylabel("Taxa de Perda (%)")
+plt.title("Taxa de Perda de Pacotes")
+plt.legend()
+plt.tight_layout()
+plt.show()
